@@ -1,0 +1,161 @@
+x-defaults: &common-config
+  networks:
+    - torrent_network
+    # - traefik_network
+  dns:
+    - 192.168.0.150
+    - 1.1.1.1
+    - 1.0.0.1
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  restart: unless-stopped
+
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/radarr:/config
+      - ${MEDIA_BASE_DIR}/Movies:/movies
+      - ${MEDIA_BASE_DIR}/qbittorrent:/downloads
+    ports:
+      - 7878:7878
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.radarr.entrypoints=web"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.local`)"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/sonarr:/config
+      - ${MEDIA_BASE_DIR}/Series:/tvseries
+      - ${MEDIA_BASE_DIR}/qbittorrent:/downloads
+    ports:
+      - 8989:8989
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.sonarr.entrypoints=web"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.local`)"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/prowlarr:/config
+    ports:
+      - 9696:9696
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.prowlarr.entrypoints=web"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.local`)"
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/bazarr:/config
+      - ${MEDIA_BASE_DIR}/Movies:/movies #optional
+      - ${MEDIA_BASE_DIR}/Series:/tvseries #optional
+    ports:
+      - 6767:6767
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.bazarr.entrypoints=web"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.local`)"
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/lidarr:/config
+      - ${MEDIA_BASE_DIR}/Songs:/music #optional
+      - ${MEDIA_BASE_DIR}/qbittorrent:/downloads #optional
+    ports:
+      - 8686:8686
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.lidarr.entrypoints=web"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.local`)"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    <<: *common-config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+    volumes:
+      - ${CONFIG_BASE_DIR}/qbittorrent:/config
+      - ${MEDIA_BASE_DIR}/qbittorrent:/downloads
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8080:8080
+    labels:
+      - "traefik.enable=false"
+      # - "traefik.docker.network=traefik_network"
+      # - "traefik.http.routers.qbittorrent.entrypoints=web"
+      # - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.local`)"
+      # - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+
+  # sabnzbd:
+  #   image: lscr.io/linuxserver/sabnzbd:latest
+  #   container_name: sabnzbd
+  #   <<: *common-config
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - ${CONFIG_BASE_DIR}/sabnzbd:/config
+  #     - ${MEDIA_BASE_DIR}/sabnzbd:/downloads
+  #     # - /path/to/incomplete/downloads:/incomplete-downloads #optional
+  #   ports:
+  #     - 8084:8080
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.local`)"
+  #     - "traefik.http.routers.sabnzbd.entrypoints=http"
+  #     # - "traefik.http.routers.sabnzbd.tls=false" # Disable HTTPS redirection
+  #     - "traefik.http.services.sabnzbd.loadbalancer.server.port=8084"  
+
+networks:
+  torrent_network:
+    name: torrent_network
+    driver: bridge
+  traefik_network:
+    external: true
