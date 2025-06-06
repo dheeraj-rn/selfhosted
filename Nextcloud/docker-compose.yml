@@ -1,0 +1,31 @@
+---
+services:
+  nextcloud:
+    image: lscr.io/linuxserver/nextcloud:latest
+    container_name: nextcloud
+    networks:
+      - traefik_network
+      - database_network
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_BASE_DIR}/Nextcloud:/config
+      - ${MEDIA_BASE_DIR}/Nextcloud:/data
+    # ports:
+    #   - 444:443
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.${SERVICE_NAME}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.${SERVICE_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${SERVICE_NAME}.tls=true"
+      - "traefik.http.routers.${SERVICE_NAME}.tls.certresolver=cloudflare"
+    restart: unless-stopped
+
+networks:
+  database_network:
+    external: true
+  traefik_network:
+    external: true
