@@ -1,0 +1,23 @@
+---
+services:
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: it-tools
+    networks:
+      - traefik_network
+    ports:
+      - 8084:80
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.docker.network=traefik_network"
+      # - "traefik.http.routers.ittools.entrypoints=web"
+      # - "traefik.http.routers.ittools.rule=Host(`it-tools.local`)"
+      - "traefik.http.routers.${SERVICE_NAME}.tls=true"
+      - "traefik.http.routers.${SERVICE_NAME}.tls.certresolver=cloudflare"
+      - "traefik.http.routers.${SERVICE_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${SERVICE_NAME}.rule=Host(`${DOMAIN}`)"
+    restart: unless-stopped
+
+networks:
+  traefik_network:
+    external: true
