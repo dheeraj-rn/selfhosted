@@ -1,0 +1,36 @@
+---
+services:
+    portainer-ee:
+        image: 'portainer/portainer-ee:lts'
+        container_name: portainer
+        networks:
+            - master_network
+            - traefik_network
+        ports:
+            - '9443:9443'
+            - '9000:9000'
+            - '8000:8000'
+        volumes:
+            - 'portainer_data:/data'
+            - '/var/run/docker.sock:/var/run/docker.sock'
+        restart: always
+        pull_policy: always
+        labels:
+            - "traefik.enable=true"
+            - "traefik.docker.network=traefik_network"
+            - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAINNAME}`)"
+            - "traefik.http.routers.portainer.entrypoints=websecure"
+            - "traefik.http.routers.portainer.tls=true"
+            - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
+            - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
+volumes:
+  portainer_data:
+    name: portainer_data
+
+networks:
+  master_network:
+    name: master_network
+    driver: bridge
+  traefik_network:
+    external: true
