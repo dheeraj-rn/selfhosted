@@ -1,0 +1,44 @@
+---
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: mariadb
+    networks:
+      - database_network
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=${TZ}
+      - MYSQL_DATABASE=${MYSQL_DATABASE} #optional
+      - MYSQL_USER=${MYSQL_USER} #optional
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD} #optional
+    volumes:
+      - ${CONFIG_BASE_DIR}/mariadb:/config
+    ports:
+      - 3306:3306
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+  
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    networks:
+      - database_network
+    environment:
+      - TZ=${TZ}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_USER=${PG_USER}
+      # - POSTGRES_DB=${PG_DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${CONFIG_BASE_DIR}/postgres:/var/lib/postgresql/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+networks:
+  database_network:
+    external: true
