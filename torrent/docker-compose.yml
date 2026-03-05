@@ -1,16 +1,76 @@
 x-defaults: &common-config
   networks:
     - torrent_network
-    # - traefik_network
+    - traefik_network
   dns:
     - 192.168.0.150
-    - 1.1.1.1
-    - 1.0.0.1
+    # - 1.1.1.1
+    # - 1.0.0.1
   extra_hosts:
     - "host.docker.internal:host-gateway"
   restart: unless-stopped
 
 services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/connect-a-container-to-gluetun.md#external-container-to-gluetun
+    networks:
+      - torrent_network
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8888:8888/tcp # HTTP proxy
+      - 8388:8388/tcp # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+      # - 9999:9999 # Health check
+      - 8191:8191 # Flaresolverr
+    healthcheck:
+      test: ping -c 1 1.1.1.1 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    volumes:
+      - ${CONFIG_BASE_DIR}/gluetun:/gluetun
+    environment:
+      - TZ=${TZ}
+      # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${PROTONVPN_PRIVATE_KEY}
+      - SERVER_COUNTRIES=Spain
+      # Server list updater
+      # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
+      - UPDATER_PERIOD=24h
+      - HTTPPROXY=on
+      - HTTPPROXY_LOG=on
+      - HTTPPROXY_STEALTH=on
+      - SHADOWSOCKS=on
+      - SHADOWSOCKS_LOG=on
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    networks:
+      - torrent_network
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TZ}
+    restart: unless-stopped
+
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
@@ -28,8 +88,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.radarr.entrypoints=web"
-      - "traefik.http.routers.radarr.rule=Host(`radarr.local`)"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAINNAME}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.routers.radarr.tls.certresolver=cloudflare"
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -48,8 +110,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.sonarr.entrypoints=web"
-      - "traefik.http.routers.sonarr.rule=Host(`sonarr.local`)"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAINNAME}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls=true"
+      - "traefik.http.routers.sonarr.tls.certresolver=cloudflare"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:develop
@@ -66,8 +130,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.prowlarr.entrypoints=web"
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.local`)"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAINNAME}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls=true"
+      - "traefik.http.routers.prowlarr.tls.certresolver=cloudflare"
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -86,8 +152,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.bazarr.entrypoints=web"
-      - "traefik.http.routers.bazarr.rule=Host(`bazarr.local`)"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${DOMAINNAME}`)"
+      - "traefik.http.routers.bazarr.entrypoints=websecure"
+      - "traefik.http.routers.bazarr.tls=true"
+      - "traefik.http.routers.bazarr.tls.certresolver=cloudflare"
 
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
@@ -106,8 +174,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.lidarr.entrypoints=web"
-      - "traefik.http.routers.lidarr.rule=Host(`lidarr.local`)"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAINNAME}`)"
+      - "traefik.http.routers.lidarr.entrypoints=websecure"
+      - "traefik.http.routers.lidarr.tls=true"
+      - "traefik.http.routers.lidarr.tls.certresolver=cloudflare"
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -117,6 +187,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=${TZ}
+      - LOG_LEVEL=debug
       - WEBUI_PORT=8080
     volumes:
       - ${CONFIG_BASE_DIR}/qbittorrent:/config
@@ -126,32 +197,13 @@ services:
       - 6881:6881/udp
       - 8080:8080
     labels:
-      - "traefik.enable=false"
-      # - "traefik.docker.network=traefik_network"
-      # - "traefik.http.routers.qbittorrent.entrypoints=web"
-      # - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.local`)"
-      # - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
-
-  # sabnzbd:
-  #   image: lscr.io/linuxserver/sabnzbd:latest
-  #   container_name: sabnzbd
-  #   <<: *common-config
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=${TZ}
-  #   volumes:
-  #     - ${CONFIG_BASE_DIR}/sabnzbd:/config
-  #     - ${MEDIA_BASE_DIR}/sabnzbd:/downloads
-  #     # - /path/to/incomplete/downloads:/incomplete-downloads #optional
-  #   ports:
-  #     - 8084:8080
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.local`)"
-  #     - "traefik.http.routers.sabnzbd.entrypoints=http"
-  #     # - "traefik.http.routers.sabnzbd.tls=false" # Disable HTTPS redirection
-  #     - "traefik.http.services.sabnzbd.loadbalancer.server.port=8084"  
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAINNAME}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=cloudflare"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
 
 networks:
   torrent_network:
