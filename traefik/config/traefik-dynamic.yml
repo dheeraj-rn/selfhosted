@@ -1,0 +1,37 @@
+http:
+  middlewares:
+    dns1-host-rewrite:
+      headers:
+        customRequestHeaders:
+          Host: "pi.hole"
+    dns2-host-rewrite:
+      headers:
+        customRequestHeaders:
+          Host: "pi.hole"
+  routers:
+    dns1:
+      rule: Host(`dns1.example.com`) # Subdomain for Pi-hole on 192.168.0.2
+      entrypoints: websecure
+      tls:
+        certresolver: cloudflare # Automatic SSL via Cloudflare
+      service: dns1
+      middlewares:
+        - dns1-host-rewrite
+    dns2:
+      rule: Host(`dns2.example.com`) # Subdomain for Pi-hole on 192.168.0.4
+      entrypoints: websecure
+      tls:
+        certresolver: cloudflare # Automatic SSL via Cloudflare
+      service: dns2
+      middlewares:
+        - dns2-host-rewrite
+
+  services:
+    dns1:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.2:80" # Points to Pi-hole on .2
+    dns2:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.4:80" # Points to Pi-hole on .4
