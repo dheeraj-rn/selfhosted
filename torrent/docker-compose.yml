@@ -3,7 +3,8 @@ x-defaults: &common-config
     - torrent_network
     - traefik_network
   dns:
-    - 192.168.0.150
+    - 192.168.0.4
+    - 192.168.0.2
     # - 1.1.1.1
     # - 1.0.0.1
   extra_hosts:
