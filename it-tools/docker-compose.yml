@@ -12,10 +12,10 @@ services:
       # - "traefik.docker.network=traefik_network"
       # - "traefik.http.routers.ittools.entrypoints=web"
       # - "traefik.http.routers.ittools.rule=Host(`it-tools.local`)"
-      - "traefik.http.routers.${SERVICE_NAME}.tls=true"
-      - "traefik.http.routers.${SERVICE_NAME}.tls.certresolver=cloudflare"
-      - "traefik.http.routers.${SERVICE_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${SERVICE_NAME}.rule=Host(`itt.${DOMAINNAME}`)"
+      - "traefik.http.routers.ittools.tls=true"
+      - "traefik.http.routers.ittools.tls.certresolver=cloudflare"
+      - "traefik.http.routers.ittools.entrypoints=websecure"
+      - "traefik.http.routers.ittools.rule=Host(`itt.${DOMAINNAME}`)"
     restart: unless-stopped
 
 networks:
