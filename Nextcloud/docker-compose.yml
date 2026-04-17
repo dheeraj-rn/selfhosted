@@ -10,9 +10,20 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-package-install
+      - INSTALL_PACKAGES=ffmpeg|nodejs|coreutils|perl|ghostscript|libva-utils|mesa-va-gallium|mesa-dri-gallium
+      - LIBVA_DRIVER_NAME=v3d
+      - MESA_LOADER_DRIVER_OVERRIDE=v3d
+      - GALLIUM_DRIVER=v3d
+      - LIBVA_DRIVERS_PATH=/usr/lib/dri
     volumes:
       - ${CONFIG_BASE_DIR}/Nextcloud:/config
       - ${MEDIA_BASE_DIR}/Nextcloud:/data
+    devices:
+      - /dev/dri:/dev/dri # For Intel/AMD or Pi 4/5 GPU access
+    group_add:
+      - "44" # video group for GPU access
+      - "105" # render group
     # ports:
     #   - 444:443
     labels:
