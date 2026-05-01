@@ -39,6 +39,20 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
+  redis:
+    image: "bitnami/redis:latest"
+    container_name: redis
+    environment:
+      - TZ=${TZ}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - database_network
+    ports:
+      - "6379:6379"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
 networks:
   database_network:
     external: true
