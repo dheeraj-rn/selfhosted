@@ -24,9 +24,16 @@ array (
 'default_phone_region' => 'IN',
 'maintenance_window_start' => 21,
 
-// Memory Caching (Note: Redis is recommended over APCu for locking)
+// Memory Caching (Redis for locking and distributed, APCu for local)
 'memcache.local' => '\\OC\\Memcache\\APCu',
-'memcache.locking' => '\\OC\\Memcache\\APCu',
+'memcache.distributed' => '\\OC\\Memcache\\Redis',
+'memcache.locking' => '\\OC\\Memcache\\Redis',
+'redis' => 
+array (
+  'host' => 'redis',
+  'password' => '...',
+  'port' => 6379,
+),
 ```
 
 ## 2. Docker Compose (`Nextcloud/docker-compose.yml`)
@@ -70,6 +77,7 @@ Adjustments made to the Raspberry Pi OS/OMV environment to handle multi-containe
 * **HTOP Customization**: Enable the `M_SWAP` column (*F2 > Screens > Main > Active Columns*) to track which containers are offloading to the SSD.
 * **Nextcloud Apps**: Use the **Memories** app for high-performance gallery browsing and **Recognize** (AI) for automated tagging.
 * **Log Location**: Check `/home/omv/Docker/config/Nextcloud/log/php/error.log` for `pm.max_children` warnings.
+* **Redis Caching**: Monitor real-time Nextcloud cache hits and file locks by running `docker exec -it redis redis-cli -a 'password' monitor` (press `Ctrl+C` to stop).
 
 ## 7. Recognize (AI) App Configuration & Hardware Fixes
 Applied to enable high-performance Face and Object recognition on Raspberry Pi 5 (ARM64) while bypassing Alpine Linux (musl) compatibility issues.
