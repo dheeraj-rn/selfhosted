@@ -4,7 +4,7 @@ services:
         image: 'portainer/portainer-ee:lts'
         container_name: portainer
         networks:
-            - master_network
+            # - master_network
             - traefik_network
         ports:
             - '9443:9443'
@@ -29,8 +29,8 @@ volumes:
     name: portainer_data
 
 networks:
-  master_network:
-    name: master_network
-    driver: bridge
+#   master_network:
+#     name: master_network
+#     driver: bridge
   traefik_network:
     external: true
