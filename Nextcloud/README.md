@@ -76,7 +76,7 @@ Adjustments made to the Raspberry Pi OS/OMV environment to handle multi-containe
 ### Real-Time Monitoring
 * **HTOP Customization**: Enable the `M_SWAP` column (*F2 > Screens > Main > Active Columns*) to track which containers are offloading to the SSD.
 * **Nextcloud Apps**: Use the **Memories** app for high-performance gallery browsing and **Recognize** (AI) for automated tagging.
-* **Log Location**: Check `/home/omv/Docker/config/Nextcloud/log/php/error.log` for `pm.max_children` warnings.
+* **Log Location**: Check `/home/dheeraj/Docker/config/Nextcloud/log/php/error.log` for `pm.max_children` warnings.
 * **Redis Caching**: Monitor real-time Nextcloud cache hits and file locks by running `docker exec -it redis redis-cli -a 'password' monitor` (press `Ctrl+C` to stop).
 
 ## 7. Recognize (AI) App Configuration & Hardware Fixes

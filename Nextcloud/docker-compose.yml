@@ -8,7 +8,7 @@ services:
       - database_network
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-package-install
       - INSTALL_PACKAGES=ffmpeg|nodejs|coreutils|perl|ghostscript|libva-utils|mesa-va-gallium|mesa-dri-gallium
