@@ -24,8 +24,9 @@ services:
       - /dev/net/tun:/dev/net/tun
     ports:
       - 8888:8888/tcp # HTTP proxy
-      - 8388:8388/tcp # Shadowsocks
-      - 8388:8388/udp # Shadowsocks
+      - 1080:1080/tcp # SOCKS5 proxy
+      # - 8388:8388/tcp # Shadowsocks
+      # - 8388:8388/udp # Shadowsocks
       # - 9999:9999 # Health check
       - 8191:8191 # Flaresolverr
     healthcheck:
@@ -44,16 +45,28 @@ services:
       - VPN_SERVICE_PROVIDER=protonvpn
       - VPN_TYPE=wireguard
       - WIREGUARD_PRIVATE_KEY=${PROTONVPN_PRIVATE_KEY}
-      - SERVER_COUNTRIES=Spain
+      - SERVER_COUNTRIES=Spain,Turkey
       # Server list updater
       # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/servers.md#update-the-vpn-servers-list
       - UPDATER_PERIOD=24h
       - HTTPPROXY=on
       - HTTPPROXY_LOG=on
       - HTTPPROXY_STEALTH=on
-      - SHADOWSOCKS=on
-      - SHADOWSOCKS_LOG=on
+      - SHADOWSOCKS=off
+      - SHADOWSOCKS_LOG=off
     restart: unless-stopped
+
+  socks5:
+    image: serjs/go-socks5-proxy:latest
+    container_name: gluetun-socks5
+    network_mode: "container:gluetun" # <-- Hooks it directly into Gluetun's VPN
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - TZ=${TZ}
+      - REQUIRE_AUTH=false
+    restart: always
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -78,7 +91,7 @@ services:
     <<: *common-config
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
     volumes:
       - ${CONFIG_BASE_DIR}/radarr:/config
@@ -100,7 +113,7 @@ services:
     <<: *common-config
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
     volumes:
       - ${CONFIG_BASE_DIR}/sonarr:/config
@@ -122,7 +135,7 @@ services:
     <<: *common-config
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
     volumes:
       - ${CONFIG_BASE_DIR}/prowlarr:/config
@@ -142,7 +155,7 @@ services:
     <<: *common-config
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
     volumes:
       - ${CONFIG_BASE_DIR}/bazarr:/config
@@ -164,7 +177,7 @@ services:
     <<: *common-config
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
     volumes:
       - ${CONFIG_BASE_DIR}/lidarr:/config
@@ -183,10 +196,22 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    <<: *common-config
+    networks:
+      torrent_network:
+        priority: 1000
+      traefik_network:
+        priority: 900
+    dns:
+      - 192.168.0.4
+      - 192.168.0.2
+      # - 1.1.1.1
+      # - 1.0.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
     environment:
       - PUID=1000
-      - PGID=1000
+      - PGID=100
       - TZ=${TZ}
       - LOG_LEVEL=debug
       - WEBUI_PORT=8080
@@ -208,7 +233,6 @@ services:
 
 networks:
   torrent_network:
-    name: torrent_network
-    driver: bridge
+    external: true
   traefik_network:
     external: true
