@@ -3,6 +3,15 @@ global:
   sendAnonymousUsage: false
 log:
   level: DEBUG
+
+# Enable Access Logs (defaults to stdout)
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+
+# Enable Metrics (e.g., exposing them to Prometheus)
+metrics:
+  prometheus: {}
+
 api:
   dashboard: true
   insecure: true

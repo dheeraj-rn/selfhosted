@@ -15,12 +15,11 @@ services:
       - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik-dynamic.yml:/etc/traefik/traefik-dynamic.yml:ro
       - ./data/certs:/var/traefik/certs/:rw
+      - ./data/logs:/var/log/traefik/:rw
     networks:
       - traefik_network
     restart: 'unless-stopped'
 
 networks:
   traefik_network:
-    external: true
-  master_network:
     external: true

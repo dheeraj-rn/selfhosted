@@ -25,6 +25,30 @@ http:
       service: dns2
       middlewares:
         - dns2-host-rewrite
+    omv:
+      rule: "Host(`omv.example.com`)"
+      entryPoints: websecure
+      tls:
+        certresolver: cloudflare
+      service: omv
+    freellmapi:
+      rule: "Host(`freellmapi.example.com`)"
+      entryPoints: websecure
+      tls:
+        certresolver: cloudflare
+      service: freellmapi
+    hermes:
+      rule: "Host(`hermes.example.com`)"
+      entryPoints: websecure
+      tls:
+        certresolver: cloudflare
+      service: hermes
+    paperclip:
+      rule: "Host(`paperclip.example.com`)"
+      entryPoints: websecure
+      tls:
+        certresolver: cloudflare
+      service: paperclip
 
   services:
     dns1:
@@ -35,3 +59,19 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.0.4:80" # Points to Pi-hole on .4
+    omv:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.10:81"
+    freellmapi:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.7:3001"
+    hermes:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.7:9119"
+    paperclip:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.0.7:3100"
